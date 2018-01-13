@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/dairycart/dairycart/api/storage"
+	"github.com/dairycart/dairycart/storage/database"
 	"github.com/dairycart/dairymodels/v1"
 
 	"github.com/Masterminds/squirrel"
@@ -32,7 +32,7 @@ const userQueryByUsername = `
         username = $1
 `
 
-func (pg *postgres) GetUserByUsername(db storage.Querier, username string) (*models.User, error) {
+func (pg *postgres) GetUserByUsername(db database.Querier, username string) (*models.User, error) {
 	u := &models.User{}
 	err := db.QueryRow(userQueryByUsername, username).Scan(&u.ID, &u.FirstName, &u.LastName, &u.Username, &u.Email, &u.Password, &u.Salt, &u.IsAdmin, &u.PasswordLastChangedOn, &u.CreatedOn, &u.UpdatedOn, &u.ArchivedOn)
 	return u, err
@@ -40,7 +40,7 @@ func (pg *postgres) GetUserByUsername(db storage.Querier, username string) (*mod
 
 const userWithUsernameExistenceQuery = `SELECT EXISTS(SELECT id FROM users WHERE username = $1 and archived_on IS NULL);`
 
-func (pg *postgres) UserWithUsernameExists(db storage.Querier, sku string) (bool, error) {
+func (pg *postgres) UserWithUsernameExists(db database.Querier, sku string) (bool, error) {
 	var exists string
 
 	err := db.QueryRow(userWithUsernameExistenceQuery, sku).Scan(&exists)
@@ -55,7 +55,7 @@ func (pg *postgres) UserWithUsernameExists(db storage.Querier, sku string) (bool
 
 const userExistenceQuery = `SELECT EXISTS(SELECT id FROM users WHERE id = $1 and archived_on IS NULL);`
 
-func (pg *postgres) UserExists(db storage.Querier, id uint64) (bool, error) {
+func (pg *postgres) UserExists(db database.Querier, id uint64) (bool, error) {
 	var exists string
 
 	err := db.QueryRow(userExistenceQuery, id).Scan(&exists)
@@ -90,7 +90,7 @@ const userSelectionQuery = `
         id = $1
 `
 
-func (pg *postgres) GetUser(db storage.Querier, id uint64) (*models.User, error) {
+func (pg *postgres) GetUser(db database.Querier, id uint64) (*models.User, error) {
 	u := &models.User{}
 
 	err := db.QueryRow(userSelectionQuery, id).Scan(&u.ID, &u.FirstName, &u.LastName, &u.Username, &u.Email, &u.Password, &u.Salt, &u.IsAdmin, &u.PasswordLastChangedOn, &u.CreatedOn, &u.UpdatedOn, &u.ArchivedOn)
@@ -121,7 +121,7 @@ func buildUserListRetrievalQuery(qf *models.QueryFilter) (string, []interface{})
 	return query, args
 }
 
-func (pg *postgres) GetUserList(db storage.Querier, qf *models.QueryFilter) ([]models.User, error) {
+func (pg *postgres) GetUserList(db database.Querier, qf *models.QueryFilter) ([]models.User, error) {
 	var list []models.User
 	query, args := buildUserListRetrievalQuery(qf)
 
@@ -168,7 +168,7 @@ func buildUserCountRetrievalQuery(qf *models.QueryFilter) (string, []interface{}
 	return query, args
 }
 
-func (pg *postgres) GetUserCount(db storage.Querier, qf *models.QueryFilter) (uint64, error) {
+func (pg *postgres) GetUserCount(db database.Querier, qf *models.QueryFilter) (uint64, error) {
 	var count uint64
 	query, args := buildUserCountRetrievalQuery(qf)
 	err := db.QueryRow(query, args...).Scan(&count)
@@ -188,7 +188,7 @@ const userCreationQuery = `
         id, created_on;
 `
 
-func (pg *postgres) CreateUser(db storage.Querier, nu *models.User) (createdID uint64, createdOn time.Time, err error) {
+func (pg *postgres) CreateUser(db database.Querier, nu *models.User) (createdID uint64, createdOn time.Time, err error) {
 	err = db.QueryRow(userCreationQuery, &nu.FirstName, &nu.LastName, &nu.Username, &nu.Email, &nu.Password, &nu.Salt, &nu.IsAdmin, &nu.PasswordLastChangedOn).Scan(&createdID, &createdOn)
 	return createdID, createdOn, err
 }
@@ -209,7 +209,7 @@ const userUpdateQuery = `
     RETURNING updated_on;
 `
 
-func (pg *postgres) UpdateUser(db storage.Querier, updated *models.User) (time.Time, error) {
+func (pg *postgres) UpdateUser(db database.Querier, updated *models.User) (time.Time, error) {
 	var t time.Time
 	err := db.QueryRow(userUpdateQuery, &updated.FirstName, &updated.LastName, &updated.Username, &updated.Email, &updated.Password, &updated.Salt, &updated.IsAdmin, &updated.PasswordLastChangedOn, &updated.ID).Scan(&t)
 	return t, err
@@ -222,7 +222,7 @@ const userDeletionQuery = `
     RETURNING archived_on
 `
 
-func (pg *postgres) DeleteUser(db storage.Querier, id uint64) (t time.Time, err error) {
+func (pg *postgres) DeleteUser(db database.Querier, id uint64) (t time.Time, err error) {
 	err = db.QueryRow(userDeletionQuery, id).Scan(&t)
 	return t, err
 }

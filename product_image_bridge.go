@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/dairycart/dairycart/api/storage"
+	"github.com/dairycart/dairycart/storage/database"
 	"github.com/dairycart/dairymodels/v1"
 
 	"github.com/Masterminds/squirrel"
@@ -12,7 +12,7 @@ import (
 
 const productImageBridgeExistenceQuery = `SELECT EXISTS(SELECT id FROM product_image_bridge WHERE id = $1 and archived_on IS NULL);`
 
-func (pg *postgres) ProductImageBridgeExists(db storage.Querier, id uint64) (bool, error) {
+func (pg *postgres) ProductImageBridgeExists(db database.Querier, id uint64) (bool, error) {
 	var exists string
 
 	err := db.QueryRow(productImageBridgeExistenceQuery, id).Scan(&exists)
@@ -38,7 +38,7 @@ const productImageBridgeSelectionQuery = `
         id = $1
 `
 
-func (pg *postgres) GetProductImageBridge(db storage.Querier, id uint64) (*models.ProductImageBridge, error) {
+func (pg *postgres) GetProductImageBridge(db database.Querier, id uint64) (*models.ProductImageBridge, error) {
 	p := &models.ProductImageBridge{}
 
 	err := db.QueryRow(productImageBridgeSelectionQuery, id).Scan(&p.ID, &p.ProductID, &p.ProductImageID)
@@ -60,7 +60,7 @@ func buildProductImageBridgeListRetrievalQuery(qf *models.QueryFilter) (string, 
 	return query, args
 }
 
-func (pg *postgres) GetProductImageBridgeList(db storage.Querier, qf *models.QueryFilter) ([]models.ProductImageBridge, error) {
+func (pg *postgres) GetProductImageBridgeList(db database.Querier, qf *models.QueryFilter) ([]models.ProductImageBridge, error) {
 	var list []models.ProductImageBridge
 	query, args := buildProductImageBridgeListRetrievalQuery(qf)
 
@@ -98,7 +98,7 @@ func buildProductImageBridgeCountRetrievalQuery(qf *models.QueryFilter) (string,
 	return query, args
 }
 
-func (pg *postgres) GetProductImageBridgeCount(db storage.Querier, qf *models.QueryFilter) (uint64, error) {
+func (pg *postgres) GetProductImageBridgeCount(db database.Querier, qf *models.QueryFilter) (uint64, error) {
 	var count uint64
 	query, args := buildProductImageBridgeCountRetrievalQuery(qf)
 	err := db.QueryRow(query, args...).Scan(&count)
@@ -118,7 +118,7 @@ const productImageBridgeCreationQuery = `
         id, created_on;
 `
 
-func (pg *postgres) CreateProductImageBridge(db storage.Querier, nu *models.ProductImageBridge) (createdID uint64, createdOn time.Time, err error) {
+func (pg *postgres) CreateProductImageBridge(db database.Querier, nu *models.ProductImageBridge) (createdID uint64, createdOn time.Time, err error) {
 	err = db.QueryRow(productImageBridgeCreationQuery, &nu.ProductID, &nu.ProductImageID).Scan(&createdID, &createdOn)
 	return createdID, createdOn, err
 }
@@ -133,7 +133,7 @@ const productImageBridgeUpdateQuery = `
     RETURNING updated_on;
 `
 
-func (pg *postgres) UpdateProductImageBridge(db storage.Querier, updated *models.ProductImageBridge) (time.Time, error) {
+func (pg *postgres) UpdateProductImageBridge(db database.Querier, updated *models.ProductImageBridge) (time.Time, error) {
 	var t time.Time
 	err := db.QueryRow(productImageBridgeUpdateQuery, &updated.ProductID, &updated.ProductImageID, &updated.ID).Scan(&t)
 	return t, err
@@ -146,7 +146,7 @@ const productImageBridgeDeletionQuery = `
     RETURNING archived_on
 `
 
-func (pg *postgres) DeleteProductImageBridge(db storage.Querier, id uint64) (t time.Time, err error) {
+func (pg *postgres) DeleteProductImageBridge(db database.Querier, id uint64) (t time.Time, err error) {
 	err = db.QueryRow(productImageBridgeDeletionQuery, id).Scan(&t)
 	return t, err
 }

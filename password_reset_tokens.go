@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/dairycart/dairycart/api/storage"
+	"github.com/dairycart/dairycart/storage/database"
 	"github.com/dairycart/dairymodels/v1"
 
 	"github.com/Masterminds/squirrel"
@@ -12,7 +12,7 @@ import (
 
 const passwordResetTokenExistenceQueryByUserID = `SELECT EXISTS(SELECT id FROM password_reset_tokens WHERE user_id = $1 AND NOW() < expires_on);`
 
-func (pg *postgres) PasswordResetTokenForUserIDExists(db storage.Querier, id uint64) (bool, error) {
+func (pg *postgres) PasswordResetTokenForUserIDExists(db database.Querier, id uint64) (bool, error) {
 	var exists string
 
 	err := db.QueryRow(passwordResetTokenExistenceQueryByUserID, id).Scan(&exists)
@@ -27,7 +27,7 @@ func (pg *postgres) PasswordResetTokenForUserIDExists(db storage.Querier, id uin
 
 const passwordResetTokenExistenceQueryByToken = `SELECT EXISTS(SELECT id FROM password_reset_tokens WHERE token = $1 AND NOW() < expires_on);`
 
-func (pg *postgres) PasswordResetTokenWithTokenExists(db storage.Querier, token string) (bool, error) {
+func (pg *postgres) PasswordResetTokenWithTokenExists(db database.Querier, token string) (bool, error) {
 	var exists string
 
 	err := db.QueryRow(passwordResetTokenExistenceQueryByToken, token).Scan(&exists)
@@ -42,7 +42,7 @@ func (pg *postgres) PasswordResetTokenWithTokenExists(db storage.Querier, token 
 
 const passwordResetTokenExistenceQuery = `SELECT EXISTS(SELECT id FROM password_reset_tokens WHERE id = $1 and archived_on IS NULL);`
 
-func (pg *postgres) PasswordResetTokenExists(db storage.Querier, id uint64) (bool, error) {
+func (pg *postgres) PasswordResetTokenExists(db database.Querier, id uint64) (bool, error) {
 	var exists string
 
 	err := db.QueryRow(passwordResetTokenExistenceQuery, id).Scan(&exists)
@@ -71,7 +71,7 @@ const passwordResetTokenSelectionQuery = `
         id = $1
 `
 
-func (pg *postgres) GetPasswordResetToken(db storage.Querier, id uint64) (*models.PasswordResetToken, error) {
+func (pg *postgres) GetPasswordResetToken(db database.Querier, id uint64) (*models.PasswordResetToken, error) {
 	p := &models.PasswordResetToken{}
 
 	err := db.QueryRow(passwordResetTokenSelectionQuery, id).Scan(&p.ID, &p.UserID, &p.Token, &p.CreatedOn, &p.ExpiresOn, &p.PasswordResetOn)
@@ -96,7 +96,7 @@ func buildPasswordResetTokenListRetrievalQuery(qf *models.QueryFilter) (string, 
 	return query, args
 }
 
-func (pg *postgres) GetPasswordResetTokenList(db storage.Querier, qf *models.QueryFilter) ([]models.PasswordResetToken, error) {
+func (pg *postgres) GetPasswordResetTokenList(db database.Querier, qf *models.QueryFilter) ([]models.PasswordResetToken, error) {
 	var list []models.PasswordResetToken
 	query, args := buildPasswordResetTokenListRetrievalQuery(qf)
 
@@ -137,7 +137,7 @@ func buildPasswordResetTokenCountRetrievalQuery(qf *models.QueryFilter) (string,
 	return query, args
 }
 
-func (pg *postgres) GetPasswordResetTokenCount(db storage.Querier, qf *models.QueryFilter) (uint64, error) {
+func (pg *postgres) GetPasswordResetTokenCount(db database.Querier, qf *models.QueryFilter) (uint64, error) {
 	var count uint64
 	query, args := buildPasswordResetTokenCountRetrievalQuery(qf)
 	err := db.QueryRow(query, args...).Scan(&count)
@@ -157,7 +157,7 @@ const passwordResetTokenCreationQuery = `
         id, created_on;
 `
 
-func (pg *postgres) CreatePasswordResetToken(db storage.Querier, nu *models.PasswordResetToken) (createdID uint64, createdOn time.Time, err error) {
+func (pg *postgres) CreatePasswordResetToken(db database.Querier, nu *models.PasswordResetToken) (createdID uint64, createdOn time.Time, err error) {
 	err = db.QueryRow(passwordResetTokenCreationQuery, &nu.UserID, &nu.Token, &nu.ExpiresOn, &nu.PasswordResetOn).Scan(&createdID, &createdOn)
 	return createdID, createdOn, err
 }
@@ -174,7 +174,7 @@ const passwordResetTokenUpdateQuery = `
     RETURNING updated_on;
 `
 
-func (pg *postgres) UpdatePasswordResetToken(db storage.Querier, updated *models.PasswordResetToken) (time.Time, error) {
+func (pg *postgres) UpdatePasswordResetToken(db database.Querier, updated *models.PasswordResetToken) (time.Time, error) {
 	var t time.Time
 	err := db.QueryRow(passwordResetTokenUpdateQuery, &updated.UserID, &updated.Token, &updated.ExpiresOn, &updated.PasswordResetOn, &updated.ID).Scan(&t)
 	return t, err
@@ -187,7 +187,7 @@ const passwordResetTokenDeletionQuery = `
     RETURNING archived_on
 `
 
-func (pg *postgres) DeletePasswordResetToken(db storage.Querier, id uint64) (t time.Time, err error) {
+func (pg *postgres) DeletePasswordResetToken(db database.Querier, id uint64) (t time.Time, err error) {
 	err = db.QueryRow(passwordResetTokenDeletionQuery, id).Scan(&t)
 	return t, err
 }

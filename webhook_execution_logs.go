@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/dairycart/dairycart/api/storage"
+	"github.com/dairycart/dairycart/storage/database"
 	"github.com/dairycart/dairymodels/v1"
 
 	"github.com/Masterminds/squirrel"
@@ -12,7 +12,7 @@ import (
 
 const webhookExecutionLogExistenceQuery = `SELECT EXISTS(SELECT id FROM webhook_execution_logs WHERE id = $1 and archived_on IS NULL);`
 
-func (pg *postgres) WebhookExecutionLogExists(db storage.Querier, id uint64) (bool, error) {
+func (pg *postgres) WebhookExecutionLogExists(db database.Querier, id uint64) (bool, error) {
 	var exists string
 
 	err := db.QueryRow(webhookExecutionLogExistenceQuery, id).Scan(&exists)
@@ -40,7 +40,7 @@ const webhookExecutionLogSelectionQuery = `
         id = $1
 `
 
-func (pg *postgres) GetWebhookExecutionLog(db storage.Querier, id uint64) (*models.WebhookExecutionLog, error) {
+func (pg *postgres) GetWebhookExecutionLog(db database.Querier, id uint64) (*models.WebhookExecutionLog, error) {
 	w := &models.WebhookExecutionLog{}
 
 	err := db.QueryRow(webhookExecutionLogSelectionQuery, id).Scan(&w.ID, &w.WebhookID, &w.StatusCode, &w.Succeeded, &w.ExecutedOn)
@@ -64,7 +64,7 @@ func buildWebhookExecutionLogListRetrievalQuery(qf *models.QueryFilter) (string,
 	return query, args
 }
 
-func (pg *postgres) GetWebhookExecutionLogList(db storage.Querier, qf *models.QueryFilter) ([]models.WebhookExecutionLog, error) {
+func (pg *postgres) GetWebhookExecutionLogList(db database.Querier, qf *models.QueryFilter) ([]models.WebhookExecutionLog, error) {
 	var list []models.WebhookExecutionLog
 	query, args := buildWebhookExecutionLogListRetrievalQuery(qf)
 
@@ -104,7 +104,7 @@ func buildWebhookExecutionLogCountRetrievalQuery(qf *models.QueryFilter) (string
 	return query, args
 }
 
-func (pg *postgres) GetWebhookExecutionLogCount(db storage.Querier, qf *models.QueryFilter) (uint64, error) {
+func (pg *postgres) GetWebhookExecutionLogCount(db database.Querier, qf *models.QueryFilter) (uint64, error) {
 	var count uint64
 	query, args := buildWebhookExecutionLogCountRetrievalQuery(qf)
 	err := db.QueryRow(query, args...).Scan(&count)
@@ -124,7 +124,7 @@ const webhookExecutionLogCreationQuery = `
         id, created_on;
 `
 
-func (pg *postgres) CreateWebhookExecutionLog(db storage.Querier, nu *models.WebhookExecutionLog) (createdID uint64, createdOn time.Time, err error) {
+func (pg *postgres) CreateWebhookExecutionLog(db database.Querier, nu *models.WebhookExecutionLog) (createdID uint64, createdOn time.Time, err error) {
 	err = db.QueryRow(webhookExecutionLogCreationQuery, &nu.WebhookID, &nu.StatusCode, &nu.Succeeded, &nu.ExecutedOn).Scan(&createdID, &createdOn)
 	return createdID, createdOn, err
 }
@@ -141,7 +141,7 @@ const webhookExecutionLogUpdateQuery = `
     RETURNING updated_on;
 `
 
-func (pg *postgres) UpdateWebhookExecutionLog(db storage.Querier, updated *models.WebhookExecutionLog) (time.Time, error) {
+func (pg *postgres) UpdateWebhookExecutionLog(db database.Querier, updated *models.WebhookExecutionLog) (time.Time, error) {
 	var t time.Time
 	err := db.QueryRow(webhookExecutionLogUpdateQuery, &updated.WebhookID, &updated.StatusCode, &updated.Succeeded, &updated.ExecutedOn, &updated.ID).Scan(&t)
 	return t, err
@@ -154,7 +154,7 @@ const webhookExecutionLogDeletionQuery = `
     RETURNING archived_on
 `
 
-func (pg *postgres) DeleteWebhookExecutionLog(db storage.Querier, id uint64) (t time.Time, err error) {
+func (pg *postgres) DeleteWebhookExecutionLog(db database.Querier, id uint64) (t time.Time, err error) {
 	err = db.QueryRow(webhookExecutionLogDeletionQuery, id).Scan(&t)
 	return t, err
 }

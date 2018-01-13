@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/dairycart/dairycart/api/storage"
+	"github.com/dairycart/dairycart/storage/database"
 	"github.com/dairycart/dairymodels/v1"
 
 	"github.com/Masterminds/squirrel"
@@ -19,7 +19,7 @@ const assignProductImageIDToProductQuery = `
     RETURNING updated_on;
 `
 
-func (pg *postgres) SetPrimaryProductImageForProduct(db storage.Querier, productID, imageID uint64) (t time.Time, err error) {
+func (pg *postgres) SetPrimaryProductImageForProduct(db database.Querier, productID, imageID uint64) (t time.Time, err error) {
 	err = db.QueryRow(assignProductImageIDToProductQuery, imageID, productID).Scan(&t)
 	return t, err
 }
@@ -43,7 +43,7 @@ const productImageQueryByProductID = `
         product_id = $1
 `
 
-func (pg *postgres) GetProductImagesByProductID(db storage.Querier, productID uint64) ([]models.ProductImage, error) {
+func (pg *postgres) GetProductImagesByProductID(db database.Querier, productID uint64) ([]models.ProductImage, error) {
 	var list []models.ProductImage
 
 	rows, err := db.Query(productImageQueryByProductID, productID)
@@ -79,7 +79,7 @@ func (pg *postgres) GetProductImagesByProductID(db storage.Querier, productID ui
 
 const productImageExistenceQuery = `SELECT EXISTS(SELECT id FROM product_images WHERE id = $1 and archived_on IS NULL);`
 
-func (pg *postgres) ProductImageExists(db storage.Querier, id uint64) (bool, error) {
+func (pg *postgres) ProductImageExists(db database.Querier, id uint64) (bool, error) {
 	var exists string
 
 	err := db.QueryRow(productImageExistenceQuery, id).Scan(&exists)
@@ -111,7 +111,7 @@ const productImageSelectionQuery = `
         id = $1
 `
 
-func (pg *postgres) GetProductImage(db storage.Querier, id uint64) (*models.ProductImage, error) {
+func (pg *postgres) GetProductImage(db database.Querier, id uint64) (*models.ProductImage, error) {
 	p := &models.ProductImage{}
 
 	err := db.QueryRow(productImageSelectionQuery, id).Scan(&p.ID, &p.ProductRootID, &p.ThumbnailURL, &p.MainURL, &p.OriginalURL, &p.SourceURL, &p.CreatedOn, &p.UpdatedOn, &p.ArchivedOn)
@@ -139,7 +139,7 @@ func buildProductImageListRetrievalQuery(qf *models.QueryFilter) (string, []inte
 	return query, args
 }
 
-func (pg *postgres) GetProductImageList(db storage.Querier, qf *models.QueryFilter) ([]models.ProductImage, error) {
+func (pg *postgres) GetProductImageList(db database.Querier, qf *models.QueryFilter) ([]models.ProductImage, error) {
 	var list []models.ProductImage
 	query, args := buildProductImageListRetrievalQuery(qf)
 
@@ -183,7 +183,7 @@ func buildProductImageCountRetrievalQuery(qf *models.QueryFilter) (string, []int
 	return query, args
 }
 
-func (pg *postgres) GetProductImageCount(db storage.Querier, qf *models.QueryFilter) (uint64, error) {
+func (pg *postgres) GetProductImageCount(db database.Querier, qf *models.QueryFilter) (uint64, error) {
 	var count uint64
 	query, args := buildProductImageCountRetrievalQuery(qf)
 	err := db.QueryRow(query, args...).Scan(&count)
@@ -203,7 +203,7 @@ const productImageCreationQuery = `
         id, created_on;
 `
 
-func (pg *postgres) CreateProductImage(db storage.Querier, nu *models.ProductImage) (createdID uint64, createdOn time.Time, err error) {
+func (pg *postgres) CreateProductImage(db database.Querier, nu *models.ProductImage) (createdID uint64, createdOn time.Time, err error) {
 	err = db.QueryRow(productImageCreationQuery, &nu.ProductRootID, &nu.ThumbnailURL, &nu.MainURL, &nu.OriginalURL, &nu.SourceURL).Scan(&createdID, &createdOn)
 	return createdID, createdOn, err
 }
@@ -221,7 +221,7 @@ const productImageUpdateQuery = `
     RETURNING updated_on;
 `
 
-func (pg *postgres) UpdateProductImage(db storage.Querier, updated *models.ProductImage) (time.Time, error) {
+func (pg *postgres) UpdateProductImage(db database.Querier, updated *models.ProductImage) (time.Time, error) {
 	var t time.Time
 	err := db.QueryRow(productImageUpdateQuery, &updated.ProductRootID, &updated.ThumbnailURL, &updated.MainURL, &updated.OriginalURL, &updated.SourceURL, &updated.ID).Scan(&t)
 	return t, err
@@ -234,7 +234,7 @@ const productImageDeletionQuery = `
     RETURNING archived_on
 `
 
-func (pg *postgres) DeleteProductImage(db storage.Querier, id uint64) (t time.Time, err error) {
+func (pg *postgres) DeleteProductImage(db database.Querier, id uint64) (t time.Time, err error) {
 	err = db.QueryRow(productImageDeletionQuery, id).Scan(&t)
 	return t, err
 }

@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/dairycart/dairycart/api/storage"
+	"github.com/dairycart/dairycart/storage/database"
 	"github.com/dairycart/dairymodels/v1"
 
 	"github.com/Masterminds/squirrel"
@@ -12,7 +12,7 @@ import (
 
 const productRootWithSKUPrefixExistenceQuery = `SELECT EXISTS(SELECT id FROM product_roots WHERE sku_prefix = $1 and archived_on IS NULL);`
 
-func (pg *postgres) ProductRootWithSKUPrefixExists(db storage.Querier, skuPrefix string) (bool, error) {
+func (pg *postgres) ProductRootWithSKUPrefixExists(db database.Querier, skuPrefix string) (bool, error) {
 	var exists string
 
 	err := db.QueryRow(productRootWithSKUPrefixExistenceQuery, skuPrefix).Scan(&exists)
@@ -27,7 +27,7 @@ func (pg *postgres) ProductRootWithSKUPrefixExists(db storage.Querier, skuPrefix
 
 const productRootExistenceQuery = `SELECT EXISTS(SELECT id FROM product_roots WHERE id = $1 and archived_on IS NULL);`
 
-func (pg *postgres) ProductRootExists(db storage.Querier, id uint64) (bool, error) {
+func (pg *postgres) ProductRootExists(db database.Querier, id uint64) (bool, error) {
 	var exists string
 
 	err := db.QueryRow(productRootExistenceQuery, id).Scan(&exists)
@@ -73,7 +73,7 @@ const productRootSelectionQuery = `
         id = $1
 `
 
-func (pg *postgres) GetProductRoot(db storage.Querier, id uint64) (*models.ProductRoot, error) {
+func (pg *postgres) GetProductRoot(db database.Querier, id uint64) (*models.ProductRoot, error) {
 	p := &models.ProductRoot{}
 
 	err := db.QueryRow(productRootSelectionQuery, id).Scan(&p.ID, &p.Name, &p.PrimaryImageID, &p.Subtitle, &p.Description, &p.SKUPrefix, &p.Manufacturer, &p.Brand, &p.Taxable, &p.Cost, &p.ProductWeight, &p.ProductHeight, &p.ProductWidth, &p.ProductLength, &p.PackageWeight, &p.PackageHeight, &p.PackageWidth, &p.PackageLength, &p.QuantityPerPackage, &p.AvailableOn, &p.CreatedOn, &p.UpdatedOn, &p.ArchivedOn)
@@ -115,7 +115,7 @@ func buildProductRootListRetrievalQuery(qf *models.QueryFilter) (string, []inter
 	return query, args
 }
 
-func (pg *postgres) GetProductRootList(db storage.Querier, qf *models.QueryFilter) ([]models.ProductRoot, error) {
+func (pg *postgres) GetProductRootList(db database.Querier, qf *models.QueryFilter) ([]models.ProductRoot, error) {
 	var list []models.ProductRoot
 	query, args := buildProductRootListRetrievalQuery(qf)
 
@@ -173,7 +173,7 @@ func buildProductRootCountRetrievalQuery(qf *models.QueryFilter) (string, []inte
 	return query, args
 }
 
-func (pg *postgres) GetProductRootCount(db storage.Querier, qf *models.QueryFilter) (uint64, error) {
+func (pg *postgres) GetProductRootCount(db database.Querier, qf *models.QueryFilter) (uint64, error) {
 	var count uint64
 	query, args := buildProductRootCountRetrievalQuery(qf)
 	err := db.QueryRow(query, args...).Scan(&count)
@@ -193,7 +193,7 @@ const productRootCreationQuery = `
         id, created_on;
 `
 
-func (pg *postgres) CreateProductRoot(db storage.Querier, nu *models.ProductRoot) (createdID uint64, createdOn time.Time, err error) {
+func (pg *postgres) CreateProductRoot(db database.Querier, nu *models.ProductRoot) (createdID uint64, createdOn time.Time, err error) {
 	err = db.QueryRow(productRootCreationQuery, &nu.Name, &nu.PrimaryImageID, &nu.Subtitle, &nu.Description, &nu.SKUPrefix, &nu.Manufacturer, &nu.Brand, &nu.Taxable, &nu.Cost, &nu.ProductWeight, &nu.ProductHeight, &nu.ProductWidth, &nu.ProductLength, &nu.PackageWeight, &nu.PackageHeight, &nu.PackageWidth, &nu.PackageLength, &nu.QuantityPerPackage, &nu.AvailableOn).Scan(&createdID, &createdOn)
 	return createdID, createdOn, err
 }
@@ -225,7 +225,7 @@ const productRootUpdateQuery = `
     RETURNING updated_on;
 `
 
-func (pg *postgres) UpdateProductRoot(db storage.Querier, updated *models.ProductRoot) (time.Time, error) {
+func (pg *postgres) UpdateProductRoot(db database.Querier, updated *models.ProductRoot) (time.Time, error) {
 	var t time.Time
 	err := db.QueryRow(productRootUpdateQuery, &updated.Name, &updated.PrimaryImageID, &updated.Subtitle, &updated.Description, &updated.SKUPrefix, &updated.Manufacturer, &updated.Brand, &updated.Taxable, &updated.Cost, &updated.ProductWeight, &updated.ProductHeight, &updated.ProductWidth, &updated.ProductLength, &updated.PackageWeight, &updated.PackageHeight, &updated.PackageWidth, &updated.PackageLength, &updated.QuantityPerPackage, &updated.AvailableOn, &updated.ID).Scan(&t)
 	return t, err
@@ -238,7 +238,7 @@ const productRootDeletionQuery = `
     RETURNING archived_on
 `
 
-func (pg *postgres) DeleteProductRoot(db storage.Querier, id uint64) (t time.Time, err error) {
+func (pg *postgres) DeleteProductRoot(db database.Querier, id uint64) (t time.Time, err error) {
 	err = db.QueryRow(productRootDeletionQuery, id).Scan(&t)
 	return t, err
 }

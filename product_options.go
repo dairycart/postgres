@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/dairycart/dairycart/api/storage"
+	"github.com/dairycart/dairycart/storage/database"
 	"github.com/dairycart/dairymodels/v1"
 
 	"github.com/Masterminds/squirrel"
@@ -12,7 +12,7 @@ import (
 
 const productOptionForNameAndProductIDExistenceQuery = `SELECT EXISTS(SELECT 1 FROM product_options WHERE name = $1 AND product_root_id = $2 and archived_on IS NULL)`
 
-func (pg *postgres) ProductOptionWithNameExistsForProductRoot(db storage.Querier, name string, productRootID uint64) (bool, error) {
+func (pg *postgres) ProductOptionWithNameExistsForProductRoot(db database.Querier, name string, productRootID uint64) (bool, error) {
 	var exists string
 
 	err := db.QueryRow(productOptionForNameAndProductIDExistenceQuery, name, productRootID).Scan(&exists)
@@ -39,7 +39,7 @@ const productOptionQueryByProductRootID = `
         product_root_id = $1
 `
 
-func (pg *postgres) GetProductOptionsByProductRootID(db storage.Querier, productRootID uint64) ([]models.ProductOption, error) {
+func (pg *postgres) GetProductOptionsByProductRootID(db database.Querier, productRootID uint64) ([]models.ProductOption, error) {
 	var list []models.ProductOption
 
 	rows, err := db.Query(productOptionQueryByProductRootID, productRootID)
@@ -72,7 +72,7 @@ func (pg *postgres) GetProductOptionsByProductRootID(db storage.Querier, product
 
 const productOptionExistenceQuery = `SELECT EXISTS(SELECT id FROM product_options WHERE id = $1 and archived_on IS NULL);`
 
-func (pg *postgres) ProductOptionExists(db storage.Querier, id uint64) (bool, error) {
+func (pg *postgres) ProductOptionExists(db database.Querier, id uint64) (bool, error) {
 	var exists string
 
 	err := db.QueryRow(productOptionExistenceQuery, id).Scan(&exists)
@@ -101,7 +101,7 @@ const productOptionSelectionQuery = `
         id = $1
 `
 
-func (pg *postgres) GetProductOption(db storage.Querier, id uint64) (*models.ProductOption, error) {
+func (pg *postgres) GetProductOption(db database.Querier, id uint64) (*models.ProductOption, error) {
 	p := &models.ProductOption{}
 
 	err := db.QueryRow(productOptionSelectionQuery, id).Scan(&p.ID, &p.Name, &p.ProductRootID, &p.CreatedOn, &p.UpdatedOn, &p.ArchivedOn)
@@ -126,7 +126,7 @@ func buildProductOptionListRetrievalQuery(qf *models.QueryFilter) (string, []int
 	return query, args
 }
 
-func (pg *postgres) GetProductOptionList(db storage.Querier, qf *models.QueryFilter) ([]models.ProductOption, error) {
+func (pg *postgres) GetProductOptionList(db database.Querier, qf *models.QueryFilter) ([]models.ProductOption, error) {
 	var list []models.ProductOption
 	query, args := buildProductOptionListRetrievalQuery(qf)
 
@@ -167,7 +167,7 @@ func buildProductOptionCountRetrievalQuery(qf *models.QueryFilter) (string, []in
 	return query, args
 }
 
-func (pg *postgres) GetProductOptionCount(db storage.Querier, qf *models.QueryFilter) (uint64, error) {
+func (pg *postgres) GetProductOptionCount(db database.Querier, qf *models.QueryFilter) (uint64, error) {
 	var count uint64
 	query, args := buildProductOptionCountRetrievalQuery(qf)
 	err := db.QueryRow(query, args...).Scan(&count)
@@ -187,7 +187,7 @@ const productOptionCreationQuery = `
         id, created_on;
 `
 
-func (pg *postgres) CreateProductOption(db storage.Querier, nu *models.ProductOption) (createdID uint64, createdOn time.Time, err error) {
+func (pg *postgres) CreateProductOption(db database.Querier, nu *models.ProductOption) (createdID uint64, createdOn time.Time, err error) {
 	err = db.QueryRow(productOptionCreationQuery, &nu.Name, &nu.ProductRootID).Scan(&createdID, &createdOn)
 	return createdID, createdOn, err
 }
@@ -202,7 +202,7 @@ const productOptionUpdateQuery = `
     RETURNING updated_on;
 `
 
-func (pg *postgres) UpdateProductOption(db storage.Querier, updated *models.ProductOption) (time.Time, error) {
+func (pg *postgres) UpdateProductOption(db database.Querier, updated *models.ProductOption) (time.Time, error) {
 	var t time.Time
 	err := db.QueryRow(productOptionUpdateQuery, &updated.Name, &updated.ProductRootID, &updated.ID).Scan(&t)
 	return t, err
@@ -215,7 +215,7 @@ const productOptionDeletionQuery = `
     RETURNING archived_on
 `
 
-func (pg *postgres) DeleteProductOption(db storage.Querier, id uint64) (t time.Time, err error) {
+func (pg *postgres) DeleteProductOption(db database.Querier, id uint64) (t time.Time, err error) {
 	err = db.QueryRow(productOptionDeletionQuery, id).Scan(&t)
 	return t, err
 }
@@ -227,7 +227,7 @@ const productOptionWithProductRootIDDeletionQuery = `
     AND archived_on IS NULL
 `
 
-func (pg *postgres) ArchiveProductOptionsWithProductRootID(db storage.Querier, id uint64) (t time.Time, err error) {
+func (pg *postgres) ArchiveProductOptionsWithProductRootID(db database.Querier, id uint64) (t time.Time, err error) {
 	err = db.QueryRow(productOptionWithProductRootIDDeletionQuery, id).Scan(&t)
 	return t, err
 }
