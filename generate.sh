@@ -1,10 +1,8 @@
 set -e
-gnorm gen --config="gnorm_postgres.toml"  # --verbose
+gnorm gen # --verbose
 
 if [ -z "$1" ]; then
-    go test github.com/dairycart/dairycart/api/storage/postgres -cover
-    go build -o=fart github.com/dairycart/dairycart/api/storage/mock && rm fart
+    go test github.com/dairycart/postgres -cover
 else
-    go build -o=fart github.com/dairycart/dairycart/api/storage/mock && rm fart
-    go test github.com/dairycart/dairycart/api/storage/postgres -coverprofile=coverage.out && go tool cover -html=coverage.out && rm coverage.out
+    go test github.com/dairycart/postgres -coverprofile=coverage.out && go tool cover -html=coverage.out && rm coverage.out
 fi

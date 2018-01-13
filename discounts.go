@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/dairycart/dairycart/api/storage"
+	"github.com/dairycart/dairycart/storage/database"
 	"github.com/dairycart/dairymodels/v1"
 
 	"github.com/Masterminds/squirrel"
@@ -34,7 +34,7 @@ const discountQueryByCode = `
         sku = $1
 `
 
-func (pg *postgres) GetDiscountByCode(db storage.Querier, code string) (*models.Discount, error) {
+func (pg *postgres) GetDiscountByCode(db database.Querier, code string) (*models.Discount, error) {
 	d := &models.Discount{}
 	err := db.QueryRow(discountQueryByCode, code).Scan(&d.ID, &d.Name, &d.DiscountType, &d.Amount, &d.ExpiresOn, &d.RequiresCode, &d.Code, &d.LimitedUse, &d.NumberOfUses, &d.LoginRequired, &d.StartsOn, &d.CreatedOn, &d.UpdatedOn, &d.ArchivedOn)
 	return d, err
@@ -42,7 +42,7 @@ func (pg *postgres) GetDiscountByCode(db storage.Querier, code string) (*models.
 
 const discountExistenceQuery = `SELECT EXISTS(SELECT id FROM discounts WHERE id = $1 and archived_on IS NULL);`
 
-func (pg *postgres) DiscountExists(db storage.Querier, id uint64) (bool, error) {
+func (pg *postgres) DiscountExists(db database.Querier, id uint64) (bool, error) {
 	var exists string
 
 	err := db.QueryRow(discountExistenceQuery, id).Scan(&exists)
@@ -79,7 +79,7 @@ const discountSelectionQuery = `
         id = $1
 `
 
-func (pg *postgres) GetDiscount(db storage.Querier, id uint64) (*models.Discount, error) {
+func (pg *postgres) GetDiscount(db database.Querier, id uint64) (*models.Discount, error) {
 	d := &models.Discount{}
 
 	err := db.QueryRow(discountSelectionQuery, id).Scan(&d.ID, &d.Name, &d.DiscountType, &d.Amount, &d.ExpiresOn, &d.RequiresCode, &d.Code, &d.LimitedUse, &d.NumberOfUses, &d.LoginRequired, &d.StartsOn, &d.CreatedOn, &d.UpdatedOn, &d.ArchivedOn)
@@ -112,7 +112,7 @@ func buildDiscountListRetrievalQuery(qf *models.QueryFilter) (string, []interfac
 	return query, args
 }
 
-func (pg *postgres) GetDiscountList(db storage.Querier, qf *models.QueryFilter) ([]models.Discount, error) {
+func (pg *postgres) GetDiscountList(db database.Querier, qf *models.QueryFilter) ([]models.Discount, error) {
 	var list []models.Discount
 	query, args := buildDiscountListRetrievalQuery(qf)
 
@@ -161,7 +161,7 @@ func buildDiscountCountRetrievalQuery(qf *models.QueryFilter) (string, []interfa
 	return query, args
 }
 
-func (pg *postgres) GetDiscountCount(db storage.Querier, qf *models.QueryFilter) (uint64, error) {
+func (pg *postgres) GetDiscountCount(db database.Querier, qf *models.QueryFilter) (uint64, error) {
 	var count uint64
 	query, args := buildDiscountCountRetrievalQuery(qf)
 	err := db.QueryRow(query, args...).Scan(&count)
@@ -181,7 +181,7 @@ const discountCreationQuery = `
         id, created_on;
 `
 
-func (pg *postgres) CreateDiscount(db storage.Querier, nu *models.Discount) (createdID uint64, createdOn time.Time, err error) {
+func (pg *postgres) CreateDiscount(db database.Querier, nu *models.Discount) (createdID uint64, createdOn time.Time, err error) {
 	err = db.QueryRow(discountCreationQuery, &nu.Name, &nu.DiscountType, &nu.Amount, &nu.ExpiresOn, &nu.RequiresCode, &nu.Code, &nu.LimitedUse, &nu.NumberOfUses, &nu.LoginRequired, &nu.StartsOn).Scan(&createdID, &createdOn)
 	return createdID, createdOn, err
 }
@@ -204,7 +204,7 @@ const discountUpdateQuery = `
     RETURNING updated_on;
 `
 
-func (pg *postgres) UpdateDiscount(db storage.Querier, updated *models.Discount) (time.Time, error) {
+func (pg *postgres) UpdateDiscount(db database.Querier, updated *models.Discount) (time.Time, error) {
 	var t time.Time
 	err := db.QueryRow(discountUpdateQuery, &updated.Name, &updated.DiscountType, &updated.Amount, &updated.ExpiresOn, &updated.RequiresCode, &updated.Code, &updated.LimitedUse, &updated.NumberOfUses, &updated.LoginRequired, &updated.StartsOn, &updated.ID).Scan(&t)
 	return t, err
@@ -217,7 +217,7 @@ const discountDeletionQuery = `
     RETURNING archived_on
 `
 
-func (pg *postgres) DeleteDiscount(db storage.Querier, id uint64) (t time.Time, err error) {
+func (pg *postgres) DeleteDiscount(db database.Querier, id uint64) (t time.Time, err error) {
 	err = db.QueryRow(discountDeletionQuery, id).Scan(&t)
 	return t, err
 }

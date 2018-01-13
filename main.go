@@ -1,13 +1,13 @@
 package postgres
 
 import (
-	"github.com/dairycart/dairycart/api/storage"
+	// "github.com/dairycart/dairycart/storage/database"
 	"github.com/dairycart/dairymodels/v1"
 
 	"github.com/Masterminds/squirrel"
 )
 
-var _ storage.Storer = (*postgres)(nil)
+// var _ database.Storer = (*postgres)(nil)
 
 type postgres struct{}
 
