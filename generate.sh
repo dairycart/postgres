@@ -1,6 +1,8 @@
 set -e
-gnorm gen # --verbose
 
+(cd migrations && go-bindata -nocompress -pkg migrations .)
+
+gnorm gen # --verbose
 if [ -z "$1" ]; then
     go test github.com/dairycart/postgres -cover
 else
