@@ -33,13 +33,13 @@ func loadMigrationData(dbURL string) (*migrate.Migrate, error) {
 	return migrate.NewWithSourceInstance("go-bindata", d, dbURL)
 }
 
-func prepareForMigration(dbURL string) (*migrate.Migrate, error) {
+func prepareForMigration(db *sql.DB, dbURL string) (*migrate.Migrate, error) {
 	m, err := loadMigrationData(dbURL)
 	if err != nil {
 		return nil, err
 	}
 
-	err = databaseIsAvailable(dbURL)
+	err = databaseIsAvailable(db)
 	if err != nil {
 		return nil, err
 	}
@@ -47,16 +47,11 @@ func prepareForMigration(dbURL string) (*migrate.Migrate, error) {
 	return m, nil
 }
 
-func databaseIsAvailable(dbURL string) error {
-	db, err := sql.Open("postgres", dbURL)
-	if err != nil {
-		return err
-	}
-
+func databaseIsAvailable(db *sql.DB) error {
 	numberOfUnsuccessfulAttempts := 0
 	databaseIsNotMigrated := true
 	for databaseIsNotMigrated {
-		err = db.Ping()
+		err := db.Ping()
 		if err != nil {
 			log.Printf("waiting half a second for the database")
 			time.Sleep(500 * time.Millisecond)
@@ -72,8 +67,8 @@ func databaseIsAvailable(dbURL string) error {
 	return nil
 }
 
-func (pg *postgres) Migrate(dbURL string) error {
-	m, err := prepareForMigration(dbURL)
+func (pg *postgres) Migrate(db *sql.DB, dbURL string) error {
+	m, err := prepareForMigration(db, dbURL)
 	if err != nil {
 		return err
 	}
@@ -85,8 +80,8 @@ func (pg *postgres) Migrate(dbURL string) error {
 	return err
 }
 
-func (pg *postgres) Downgrade(dbURL string) error {
-	m, err := prepareForMigration(dbURL)
+func (pg *postgres) Downgrade(db *sql.DB, dbURL string) error {
+	m, err := prepareForMigration(db, dbURL)
 	if err != nil {
 		return err
 	}
