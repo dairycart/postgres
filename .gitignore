@@ -23,6 +23,7 @@ _testmain.go
 *.test
 *.prof
 
+Gopkg.*
 vendor
 
 # miscellaneous noise we don't want in git

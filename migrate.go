@@ -18,12 +18,12 @@ const (
 	maxConnectionAttempts = 5
 )
 
-func loadMigrationData(dbURL string) (*migrate.Migrate, error) {
+func loadMigrationData(dbURL string, loadExampleData bool) (*migrate.Migrate, error) {
 	s := bindata.Resource(migrations.AssetNames(), func(name string) ([]byte, error) {
-		if !strings.Contains(name, "example_data") {
+		if strings.Contains(name, "example_data") && loadExampleData {
 			return migrations.Asset(name)
 		}
-		return nil, nil
+		return migrations.Asset(name)
 	})
 	d, err := bindata.WithInstance(s)
 	if err != nil {
@@ -33,13 +33,13 @@ func loadMigrationData(dbURL string) (*migrate.Migrate, error) {
 	return migrate.NewWithSourceInstance("go-bindata", d, dbURL)
 }
 
-func prepareForMigration(db *sql.DB, dbURL string) (*migrate.Migrate, error) {
-	m, err := loadMigrationData(dbURL)
+func prepareForMigration(db *sql.DB, dbURL string, loadExampleData bool) (*migrate.Migrate, error) {
+	err := databaseIsAvailable(db)
 	if err != nil {
 		return nil, err
 	}
 
-	err = databaseIsAvailable(db)
+	m, err := loadMigrationData(dbURL, loadExampleData)
 	if err != nil {
 		return nil, err
 	}
@@ -67,8 +67,8 @@ func databaseIsAvailable(db *sql.DB) error {
 	return nil
 }
 
-func (pg *postgres) Migrate(db *sql.DB, dbURL string) error {
-	m, err := prepareForMigration(db, dbURL)
+func (pg *postgres) Migrate(db *sql.DB, dbURL string, loadExampleData bool) error {
+	m, err := prepareForMigration(db, dbURL, false)
 	if err != nil {
 		return err
 	}
@@ -81,7 +81,7 @@ func (pg *postgres) Migrate(db *sql.DB, dbURL string) error {
 }
 
 func (pg *postgres) Downgrade(db *sql.DB, dbURL string) error {
-	m, err := prepareForMigration(db, dbURL)
+	m, err := prepareForMigration(db, dbURL, false)
 	if err != nil {
 		return err
 	}
