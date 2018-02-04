@@ -3,6 +3,7 @@ package postgres
 import (
 	"database/sql"
 	"fmt"
+	"github.com/knq/dburl"
 	"log"
 	"strings"
 	"time"
@@ -34,6 +35,7 @@ func loadMigrationData(dbURL string, loadExampleData bool) (*migrate.Migrate, er
 }
 
 func prepareForMigration(db *sql.DB, dbURL string, loadExampleData bool) (*migrate.Migrate, error) {
+	log.Printf("preparing to migrate postgres database at url: '%s'\n", dbURL)
 	err := databaseIsAvailable(db)
 	if err != nil {
 		return nil, err
@@ -53,7 +55,7 @@ func databaseIsAvailable(db *sql.DB) error {
 	for databaseIsNotMigrated {
 		err := db.Ping()
 		if err != nil {
-			log.Printf("waiting half a second for the database")
+			log.Printf("ping failed, waiting half a second for the database")
 			time.Sleep(500 * time.Millisecond)
 			numberOfUnsuccessfulAttempts++
 

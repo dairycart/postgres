@@ -55,3 +55,5 @@ func applyQueryFilterToQueryBuilder(queryBuilder squirrel.SelectBuilder, qf *mod
 
 	return queryBuilder
 }
+
+var Postgres = &postgres{}
