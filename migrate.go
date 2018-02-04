@@ -3,7 +3,6 @@ package postgres
 import (
 	"database/sql"
 	"fmt"
-	"github.com/knq/dburl"
 	"log"
 	"strings"
 	"time"
