@@ -13,6 +13,8 @@ var _ database.Storer = (*postgres)(nil)
 
 type postgres struct{}
 
+var Postgres = &postgres{}
+
 func NewPostgres() *postgres {
 	return &postgres{}
 }
