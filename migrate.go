@@ -76,7 +76,7 @@ func (pg *postgres) Migrate(db *sql.DB, cfg *viper.Viper) error {
 	dbURL := cfg.GetString(databaseConnectionKey)
 	loadExampleData := cfg.GetBool(migrateExampleDataKey)
 
-	m, err := prepareForMigration(db, dbURL, false)
+	m, err := prepareForMigration(db, dbURL, loadExampleData)
 	if err != nil {
 		return err
 	}
@@ -88,8 +88,11 @@ func (pg *postgres) Migrate(db *sql.DB, cfg *viper.Viper) error {
 	return err
 }
 
-func (pg *postgres) Downgrade(db *sql.DB, dbURL string) error {
-	m, err := prepareForMigration(db, dbURL, false)
+func (pg *postgres) Downgrade(db *sql.DB, cfg *viper.Viper) error {
+	dbURL := cfg.GetString(databaseConnectionKey)
+	loadExampleData := cfg.GetBool(migrateExampleDataKey)
+
+	m, err := prepareForMigration(db, dbURL, loadExampleData)
 	if err != nil {
 		return err
 	}
