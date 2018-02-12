@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	dairycart "github.com/dairycart/dairycart/api"
 	"github.com/dairycart/postgres/migrations"
 
 	"github.com/mattes/migrate"
@@ -68,7 +69,10 @@ func databaseIsAvailable(db *sql.DB) error {
 	return nil
 }
 
-func (pg *postgres) Migrate(db *sql.DB, dbURL string, loadExampleData bool) error {
+func (pg *postgres) Migrate(db *sql.DB, cfg *viper.Viper) error {
+	dbURL := cfg.GetString(dairycart.DatabaseConnectionKey)
+	loadExampleData := cfg.GetBool(dairycart.MigrateExampleDataKey)
+
 	m, err := prepareForMigration(db, dbURL, false)
 	if err != nil {
 		return err
