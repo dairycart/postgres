@@ -7,16 +7,19 @@ import (
 	"strings"
 	"time"
 
-	dairycart "github.com/dairycart/dairycart/api"
 	"github.com/dairycart/postgres/migrations"
 
 	"github.com/mattes/migrate"
 	_ "github.com/mattes/migrate/database/postgres"
 	"github.com/mattes/migrate/source/go-bindata"
+	"github.com/spf13/viper"
 )
 
 const (
 	maxConnectionAttempts = 5
+
+	migrateExampleDataKey = "migrate_example_data"
+	databaseConnectionKey = "database.connection_details"
 )
 
 func loadMigrationData(dbURL string, loadExampleData bool) (*migrate.Migrate, error) {
@@ -70,8 +73,8 @@ func databaseIsAvailable(db *sql.DB) error {
 }
 
 func (pg *postgres) Migrate(db *sql.DB, cfg *viper.Viper) error {
-	dbURL := cfg.GetString(dairycart.DatabaseConnectionKey)
-	loadExampleData := cfg.GetBool(dairycart.MigrateExampleDataKey)
+	dbURL := cfg.GetString(databaseConnectionKey)
+	loadExampleData := cfg.GetBool(migrateExampleDataKey)
 
 	m, err := prepareForMigration(db, dbURL, false)
 	if err != nil {
