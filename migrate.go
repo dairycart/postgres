@@ -19,7 +19,7 @@ const (
 	maxConnectionAttempts = 5
 
 	migrateExampleDataKey = "migrate_example_data"
-	databaseConnectionKey = "database.connection_details"
+	databaseConnectionKey = "connection_details"
 )
 
 func loadMigrationData(dbURL string, loadExampleData bool) (*migrate.Migrate, error) {
